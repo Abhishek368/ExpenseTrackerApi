@@ -4,22 +4,20 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.proj.expensetrackerapi.security.CustomUserDetailsService;
 import com.proj.expensetrackerapi.security.JwtRequestFilter;
 
 @Configuration
-public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
+public class WebSecurityConfig{
 	@Autowired
 	private CustomUserDetailsService userDetailsService;
 	
@@ -28,25 +26,42 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 		return new JwtRequestFilter();
 	}
 	
-	@Override
-	protected void configure(HttpSecurity http) throws Exception {
-		// TODO Auto-generated method stub
+//	@Override
+//	protected void configure(HttpSecurity http) throws Exception {
+//		// TODO Auto-generated method stub
+//		http.csrf().disable()
+//			.authorizeRequests()
+//			.antMatchers("/login","/register").permitAll()
+//			.anyRequest().authenticated()
+//			.and()
+//			.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+//		
+//			http.addFilterBefore(authenticationJwtTokenFilter(),  UsernamePasswordAuthenticationFilter.class);
+//			http.httpBasic();
+//	}
+	
+	@Bean
+	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.csrf().disable()
-			.authorizeRequests()
-			.antMatchers("/login","/register").permitAll()
-			.anyRequest().authenticated()
-			.and()
-			.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+		.authorizeHttpRequests()
+		.requestMatchers("/login","/register").permitAll()
+		.anyRequest().authenticated()
+		.and()
+		.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+	
+		http.addFilterBefore(authenticationJwtTokenFilter(),  UsernamePasswordAuthenticationFilter.class);
 		
-			http.addFilterBefore(authenticationJwtTokenFilter(),  UsernamePasswordAuthenticationFilter.class);
-			http.httpBasic();
+		http.httpBasic();
+		
+		return http.build();
 	}
 	
-	@Override
-	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
-		// TODO Auto-generated method stub
-		auth.userDetailsService(userDetailsService);
-	}
+//	@Override
+//	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+//		// TODO Auto-generated method stub
+//		auth.userDetailsService(userDetailsService);
+//	
+//	}
 	
 	
 	@Bean
@@ -55,10 +70,23 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter{
 	}
 	
 	@Bean
-	@Override
-	public AuthenticationManager authenticationManagerBean() throws Exception {
-		 // TODO Auto-generated method stub
-		return super.authenticationManagerBean();
+	public DaoAuthenticationProvider authenticationProvider() {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(userDetailsService);
+		authProvider.setPasswordEncoder(passwordEncoder());
+		return authProvider;
 	}
+	
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception{
+		return authConfig.getAuthenticationManager();
+	}
+	
+//	@Bean
+//	@Override
+//	public AuthenticationManager authenticationManagerBean() throws Exception {
+//		 // TODO Auto-generated method stub
+//		return super.authenticationManagerBean();
+//	}
 	
 }
