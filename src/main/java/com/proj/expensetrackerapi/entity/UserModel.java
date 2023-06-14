@@ -1,7 +1,6 @@
 package com.proj.expensetrackerapi.entity;
 
-import javax.persistence.Column;
-
+import jakarta.persistence.Column;
 import lombok.Data;
 
 @Data
